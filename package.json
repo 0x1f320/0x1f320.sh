@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev",
+		"dev": "portless 0x1f320 next dev",
 		"build": "next build",
 		"start": "next start",
 		"lint": "biome check .",
@@ -21,6 +21,7 @@
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"portless": "^0.9.1",
 		"tailwindcss": "^4",
 		"typescript": "^5"
 	},
