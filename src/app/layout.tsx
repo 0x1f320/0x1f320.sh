@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -33,7 +34,10 @@ export default function RootLayout({
 			lang="ko"
 			className={`${geistSans.variable} ${geistMono.variable} ${suite.variable}`}
 		>
-			<body>{children}</body>
+			<body>
+				{children}
+				<Analytics />
+			</body>
 		</html>
 	);
 }
