@@ -5,23 +5,27 @@ import { useEffect, useRef } from "react";
 const VERTEX_SHADER = `
 attribute vec2 a_position;
 attribute float a_alpha;
+attribute vec3 a_color;
 uniform vec2 u_resolution;
 varying float v_alpha;
+varying vec3 v_color;
 
 void main() {
   vec2 clip = (a_position / u_resolution) * 2.0 - 1.0;
   gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
   gl_PointSize = 1.0;
   v_alpha = a_alpha;
+  v_color = a_color;
 }
 `;
 
 const FRAGMENT_SHADER = `
 precision mediump float;
 varying float v_alpha;
+varying vec3 v_color;
 
 void main() {
-  gl_FragColor = vec4(0.784, 0.745, 0.706, v_alpha);
+  gl_FragColor = vec4(v_color, v_alpha);
 }
 `;
 
@@ -172,6 +176,7 @@ export function StarParticles() {
 
 		const aPosition = gl.getAttribLocation(program, "a_position");
 		const aAlpha = gl.getAttribLocation(program, "a_alpha");
+		const aColor = gl.getAttribLocation(program, "a_color");
 		const uResolution = gl.getUniformLocation(program, "u_resolution");
 
 		const resize = () => {
@@ -184,15 +189,22 @@ export function StarParticles() {
 
 		const posBuffer = gl.createBuffer();
 		const alphaBuffer = gl.createBuffer();
+		const colorBuffer = gl.createBuffer();
 		const totalCount = EDGE_PARTICLES + FILL_PARTICLES + SCATTER_COUNT;
 		const positions = new Float32Array(totalCount * 2);
 		const alphas = new Float32Array(totalCount);
+		const colors = new Float32Array(totalCount * 3);
+		// target color: rgb(200, 190, 180) = (0.784, 0.745, 0.706)
+		const TARGET_R = 0.784, TARGET_G = 0.745, TARGET_B = 0.706;
 
 		interface Particle {
 			x: number;
 			y: number;
 			homeX: number;
 			homeY: number;
+			spawnX: number;
+			spawnY: number;
+			delay: number; // 0~1, staggered intro delay
 			baseAlpha: number;
 
 			phase: number;
@@ -202,6 +214,21 @@ export function StarParticles() {
 		let particles: Particle[] = [];
 		let prevW = 0;
 		let prevH = 0;
+		let introStartTime = -1;
+		const INTRO_DURATION = 1.2; // seconds
+		const INTRO_STAGGER = 0.4; // max delay spread in seconds
+
+		// ease-out cubic
+		const easeOut = (t: number) => 1 - (1 - t) ** 3;
+
+		const randomSpawn = (homeX: number, homeY: number, w: number, h: number) => {
+			const angle = Math.random() * Math.PI * 2;
+			const dist = Math.max(w, h) * (0.6 + Math.random() * 0.6);
+			return {
+				spawnX: homeX + Math.cos(angle) * dist,
+				spawnY: homeY + Math.sin(angle) * dist,
+			};
+		};
 
 		const mouse = { x: -9999, y: -9999, active: false };
 		const REPEL_RADIUS = 40;
@@ -239,6 +266,7 @@ export function StarParticles() {
 			if (w !== prevW || h !== prevH) {
 				const verts = generateStarVertices(starCx, starCy, outerR, innerR);
 				particles = [];
+				introStartTime = -1; // will be set on first frame
 
 				const rotAngle = (-25 * Math.PI) / 180; // 25도
 				const rotCos = Math.cos(rotAngle);
@@ -270,11 +298,14 @@ export function StarParticles() {
 					const x = pivotX + rx * rotCos - ry * rotSin;
 					const y = pivotY + rx * rotSin + ry * rotCos;
 
+					const spawn1 = randomSpawn(x, y, w, h);
 					particles.push({
-						x,
-						y,
+						...spawn1,
+						x: spawn1.spawnX,
+						y: spawn1.spawnY,
 						homeX: x,
 						homeY: y,
+						delay: Math.random(),
 						baseAlpha: (0.12 + Math.random() * 0.4) * fadeFactor,
 
 						phase: Math.random() * Math.PI * 2,
@@ -296,11 +327,14 @@ export function StarParticles() {
 					const x = pivotX + rx * rotCos - ry * rotSin;
 					const y = pivotY + rx * rotSin + ry * rotCos;
 
+					const spawn2 = randomSpawn(x, y, w, h);
 					particles.push({
-						x,
-						y,
+						...spawn2,
+						x: spawn2.spawnX,
+						y: spawn2.spawnY,
 						homeX: x,
 						homeY: y,
+						delay: Math.random(),
 						baseAlpha: (0.06 + Math.random() * 0.2) * fadeFactor,
 
 						phase: Math.random() * Math.PI * 2,
@@ -321,11 +355,14 @@ export function StarParticles() {
 					const x = pivotX + rx * rotCos - ry * rotSin;
 					const y = pivotY + rx * rotSin + ry * rotCos;
 
+					const spawn3 = randomSpawn(x, y, w, h);
 					particles.push({
-						x,
-						y,
+						...spawn3,
+						x: spawn3.spawnX,
+						y: spawn3.spawnY,
 						homeX: x,
 						homeY: y,
+						delay: Math.random(),
 						baseAlpha: 0.1 + Math.random() * 0.3,
 
 						phase: Math.random() * Math.PI * 2,
@@ -343,30 +380,61 @@ export function StarParticles() {
 			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 			const t = time * 0.001;
+			if (introStartTime < 0) introStartTime = t;
+			const introElapsed = t - introStartTime;
+			const introDone = introElapsed >= INTRO_DURATION + INTRO_STAGGER;
 
 			for (let i = 0; i < totalCount; i++) {
 				const p = particles[i];
 
-				if (mouse.active) {
-					const dx = p.x - mouse.x;
-					const dy = p.y - mouse.y;
-					const dist = Math.sqrt(dx * dx + dy * dy);
-					if (dist < REPEL_RADIUS && dist > 0.1) {
-						const force = ((REPEL_RADIUS - dist) / REPEL_RADIUS) * REPEL_STRENGTH;
-						p.x += (dx / dist) * force * 0.06;
-						p.y += (dy / dist) * force * 0.06;
+				if (!introDone) {
+					// staggered intro: each particle starts at its own delay
+					const particleTime = Math.max(0, introElapsed - p.delay * INTRO_STAGGER);
+					const progress = Math.min(1, particleTime / INTRO_DURATION);
+					const eased = easeOut(progress);
+					p.x = p.spawnX + (p.homeX - p.spawnX) * eased;
+					p.y = p.spawnY + (p.homeY - p.spawnY) * eased;
+					// 가까워질수록 색을 찾음 (흰색 → 타겟 색)
+					colors[i * 3] = 1.0 + (TARGET_R - 1.0) * eased;
+					colors[i * 3 + 1] = 1.0 + (TARGET_G - 1.0) * eased;
+					colors[i * 3 + 2] = 1.0 + (TARGET_B - 1.0) * eased;
+				} else {
+					if (mouse.active) {
+						const dx = p.x - mouse.x;
+						const dy = p.y - mouse.y;
+						const dist = Math.sqrt(dx * dx + dy * dy);
+						if (dist < REPEL_RADIUS && dist > 0.1) {
+							const force = ((REPEL_RADIUS - dist) / REPEL_RADIUS) * REPEL_STRENGTH;
+							p.x += (dx / dist) * force * 0.06;
+							p.y += (dy / dist) * force * 0.06;
+						}
 					}
+
+					// 원래 위치로 복귀
+					p.x += (p.homeX - p.x) * RETURN_SPEED;
+					p.y += (p.homeY - p.y) * RETURN_SPEED;
 				}
 
-				// 원래 위치로 복귀
-				p.x += (p.homeX - p.x) * RETURN_SPEED;
-				p.y += (p.homeY - p.y) * RETURN_SPEED;
+				if (introDone) {
+					colors[i * 3] = TARGET_R;
+					colors[i * 3 + 1] = TARGET_G;
+					colors[i * 3 + 2] = TARGET_B;
+				}
 
 				positions[i * 2] = p.x;
 				positions[i * 2 + 1] = p.y;
 				const flicker = Math.sin(t * p.speed * 2.5 + p.phase);
-				alphas[i] =
-					p.baseAlpha * (0.1 + 0.9 * flicker * flicker);
+				const baseFlicker = p.baseAlpha * (0.1 + 0.9 * flicker * flicker);
+
+				if (!introDone) {
+					const particleTime = Math.max(0, introElapsed - p.delay * INTRO_STAGGER);
+					const progress = Math.min(1, particleTime / INTRO_DURATION);
+					// 목표 위치에 아주 가까울 때만 알파가 올라감
+					const alphaEased = easeOut(progress) ** 3;
+					alphas[i] = baseFlicker * alphaEased;
+				} else {
+					alphas[i] = baseFlicker;
+				}
 			}
 
 			gl.uniform2f(uResolution, w, h);
@@ -381,6 +449,10 @@ export function StarParticles() {
 			gl.enableVertexAttribArray(aAlpha);
 			gl.vertexAttribPointer(aAlpha, 1, gl.FLOAT, false, 0, 0);
 
+			gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
+			gl.enableVertexAttribArray(aColor);
+			gl.vertexAttribPointer(aColor, 3, gl.FLOAT, false, 0, 0);
 
 			gl.drawArrays(gl.POINTS, 0, totalCount);
 
