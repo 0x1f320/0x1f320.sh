@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "portless 0x1f320 next dev",
+		"dev": "portless run --name 0x1f320 next dev",
 		"build": "next build",
 		"start": "next start",
 		"lint": "biome check .",
