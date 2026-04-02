@@ -191,6 +191,8 @@ export function StarParticles() {
 		interface Particle {
 			x: number;
 			y: number;
+			homeX: number;
+			homeY: number;
 			baseAlpha: number;
 
 			phase: number;
@@ -200,6 +202,23 @@ export function StarParticles() {
 		let particles: Particle[] = [];
 		let prevW = 0;
 		let prevH = 0;
+
+		const mouse = { x: -9999, y: -9999, active: false };
+		const REPEL_RADIUS = 40;
+		const REPEL_STRENGTH = 50;
+		const RETURN_SPEED = 0.12;
+
+		const onMouseMove = (e: MouseEvent) => {
+			const rect = canvas.getBoundingClientRect();
+			mouse.x = e.clientX - rect.left;
+			mouse.y = e.clientY - rect.top;
+			mouse.active = true;
+		};
+		const onMouseLeave = () => {
+			mouse.active = false;
+		};
+		canvas.addEventListener("mousemove", onMouseMove);
+		canvas.addEventListener("mouseleave", onMouseLeave);
 
 		let animId: number;
 
@@ -254,6 +273,8 @@ export function StarParticles() {
 					particles.push({
 						x,
 						y,
+						homeX: x,
+						homeY: y,
 						baseAlpha: (0.12 + Math.random() * 0.4) * fadeFactor,
 
 						phase: Math.random() * Math.PI * 2,
@@ -278,6 +299,8 @@ export function StarParticles() {
 					particles.push({
 						x,
 						y,
+						homeX: x,
+						homeY: y,
 						baseAlpha: (0.06 + Math.random() * 0.2) * fadeFactor,
 
 						phase: Math.random() * Math.PI * 2,
@@ -301,6 +324,8 @@ export function StarParticles() {
 					particles.push({
 						x,
 						y,
+						homeX: x,
+						homeY: y,
 						baseAlpha: 0.1 + Math.random() * 0.3,
 
 						phase: Math.random() * Math.PI * 2,
@@ -321,10 +346,27 @@ export function StarParticles() {
 
 			for (let i = 0; i < totalCount; i++) {
 				const p = particles[i];
+
+				if (mouse.active) {
+					const dx = p.x - mouse.x;
+					const dy = p.y - mouse.y;
+					const dist = Math.sqrt(dx * dx + dy * dy);
+					if (dist < REPEL_RADIUS && dist > 0.1) {
+						const force = ((REPEL_RADIUS - dist) / REPEL_RADIUS) * REPEL_STRENGTH;
+						p.x += (dx / dist) * force * 0.06;
+						p.y += (dy / dist) * force * 0.06;
+					}
+				}
+
+				// 원래 위치로 복귀
+				p.x += (p.homeX - p.x) * RETURN_SPEED;
+				p.y += (p.homeY - p.y) * RETURN_SPEED;
+
 				positions[i * 2] = p.x;
 				positions[i * 2 + 1] = p.y;
+				const flicker = Math.sin(t * p.speed * 2.5 + p.phase);
 				alphas[i] =
-					p.baseAlpha * (0.4 + 0.6 * Math.sin(t * p.speed + p.phase) ** 2);
+					p.baseAlpha * (0.1 + 0.9 * flicker * flicker);
 			}
 
 			gl.uniform2f(uResolution, w, h);
@@ -350,6 +392,8 @@ export function StarParticles() {
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener("resize", resize);
+			canvas.removeEventListener("mousemove", onMouseMove);
+			canvas.removeEventListener("mouseleave", onMouseLeave);
 		};
 	}, []);
 
