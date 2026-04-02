@@ -33,7 +33,7 @@ export default function Home() {
 					href="https://github.com/0x1f320"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="mt-6 inline-block font-mono text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+					className="mt-6 inline-block font-mono text-sm text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:text-zinc-300 focus:outline-none active:text-zinc-300"
 				>
 					GitHub
 				</a>
