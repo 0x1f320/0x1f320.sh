@@ -44,6 +44,54 @@
 	--theme-particle-point-size: 1.0;
 }
 
+@keyframes underline-slide {
+	0% {
+		background-size: 0% 1px;
+		background-position: left bottom var(--underline-offset);
+	}
+	50% {
+		background-size: 100% 1px;
+		background-position: left bottom var(--underline-offset);
+	}
+	50.01% {
+		background-size: 100% 1px;
+		background-position: right bottom var(--underline-offset);
+	}
+	100% {
+		background-size: 0% 1px;
+		background-position: right bottom var(--underline-offset);
+	}
+}
+
+.animate-underline-slide {
+	--underline-offset: 0.15em;
+	background-image: linear-gradient(var(--color-text-muted), var(--color-text-muted));
+	background-repeat: no-repeat;
+	background-size: 0% 1px;
+	background-position: left bottom var(--underline-offset);
+	text-shadow:
+		0.1em 0 var(--color-bg),
+		-0.1em 0 var(--color-bg),
+		0.08em 0 var(--color-bg),
+		-0.08em 0 var(--color-bg),
+		0.06em 0 var(--color-bg),
+		-0.06em 0 var(--color-bg),
+		0.04em 0 var(--color-bg),
+		-0.04em 0 var(--color-bg),
+		0.02em 0 var(--color-bg),
+		-0.02em 0 var(--color-bg);
+	animation: underline-slide 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	transition: text-shadow 0.3s ease;
+}
+
+:lang(ko) .animate-underline-slide {
+	--underline-offset: 0.05em;
+}
+
+.animation-delay-500 {
+	animation-delay: 500ms;
+}
+
 html,
 body {
 	height: 100%;

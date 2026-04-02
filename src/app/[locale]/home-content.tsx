@@ -17,7 +17,15 @@ export function HomeContent() {
 	const locale = useLocale() as Locale;
 	const ref = useScrambleText(SUFFIX);
 
-	const bioLines = t("Home.bio").split("\n");
+	const bio = t.rich("Home.bio", {
+		underline: (chunks) => (
+			<span className="animate-underline-slide">{chunks}</span>
+		),
+		underline2: (chunks) => (
+			<span className="animate-underline-slide animation-delay-500">{chunks}</span>
+		),
+		br: () => <br />,
+	});
 	const altLocale: Locale = locale === "ko" ? "en" : "ko";
 
 	return (
@@ -42,12 +50,7 @@ export function HomeContent() {
 					</div>
 				</div>
 				<p className="mt-4 font-serif text-md leading-relaxed text-[var(--color-text-muted)]">
-					{bioLines.map((line, i) => (
-						<span key={i}>
-							{i > 0 && <br />}
-							{line}
-						</span>
-					))}
+					{bio}
 				</p>
 				<div className="mt-6 flex items-center justify-between">
 					<a
