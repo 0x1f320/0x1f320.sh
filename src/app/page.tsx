@@ -18,7 +18,7 @@ export default function Home() {
 					</div>
 					<div>
 						<span className="sr-only">{PREFIX}{SUFFIX}</span>
-						<span aria-hidden="true" className="font-mono text-2xl font-light text-zinc-400">
+						<span aria-hidden="true" className="font-mono text-xl font-light text-zinc-400">
 							{PREFIX}
 							<span ref={ref}>{generateInitial(SUFFIX, 42)}</span>
 						</span>
