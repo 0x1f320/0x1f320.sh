@@ -1,6 +1,7 @@
 "use client";
 
 import { StarParticles } from "@/components/star-particles";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { generateInitial, useScrambleText } from "@/hooks/use-scramble-text";
 
 const PREFIX = "0x";
@@ -18,25 +19,28 @@ export default function Home() {
 					</div>
 					<div>
 						<span className="sr-only">{PREFIX}{SUFFIX}</span>
-						<span aria-hidden="true" className="font-mono text-xl font-light text-zinc-400">
+						<span aria-hidden="true" className="font-mono text-xl font-light text-[var(--color-text-muted)]">
 							{PREFIX}
 							<span ref={ref}>{generateInitial(SUFFIX, 42)}</span>
 						</span>
 					</div>
 				</div>
-				<p className="mt-4 font-serif text-md leading-relaxed text-zinc-400">
+				<p className="mt-4 font-serif text-md leading-relaxed text-[var(--color-text-muted)]">
 					안녕하세요. 한국에 거주하는 5년차 소프트웨어 엔지니어입니다.
 					<br />
 					문제를 해결하고, 고객 경험에 기여합니다.
 				</p>
-				<a
-					href="https://github.com/0x1f320"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="mt-6 inline-block font-mono text-sm text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:text-zinc-300 focus:outline-none active:text-zinc-300"
-				>
-					GitHub
-				</a>
+				<div className="mt-6 flex items-center justify-between">
+					<a
+						href="https://github.com/0x1f320"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="font-mono text-sm text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-text)] focus-visible:text-[var(--color-text)] focus:outline-none active:text-[var(--color-text)]"
+					>
+						GitHub
+					</a>
+					<ThemeToggle />
+				</div>
 			</main>
 		</div>
 	);

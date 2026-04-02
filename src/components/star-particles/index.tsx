@@ -14,9 +14,27 @@ const TOTAL_COUNT = EDGE_PARTICLES + FILL_PARTICLES + SCATTER_COUNT;
 const POINTS = 6;
 const TAIL_STRETCH = 3.5;
 
-const TARGET_R = 0.784;
-const TARGET_G = 0.745;
-const TARGET_B = 0.706;
+function getThemeColor(name: string, fallback: number): number {
+	if (typeof document === "undefined") return fallback;
+	const val = getComputedStyle(document.documentElement)
+		.getPropertyValue(name)
+		.trim();
+	return val ? Number.parseFloat(val) : fallback;
+}
+
+function getParticleColors() {
+	return {
+		targetR: getThemeColor("--theme-particle-r", 0.784),
+		targetG: getThemeColor("--theme-particle-g", 0.745),
+		targetB: getThemeColor("--theme-particle-b", 0.706),
+		startR: getThemeColor("--theme-particle-start-r", 1.0),
+		startG: getThemeColor("--theme-particle-start-g", 1.0),
+		startB: getThemeColor("--theme-particle-start-b", 1.0),
+		alphaBoost: getThemeColor("--theme-particle-alpha-boost", 1.0),
+		scatterAlpha: getThemeColor("--theme-particle-scatter-alpha", 1.0),
+		pointSize: getThemeColor("--theme-particle-point-size", 1.0),
+	};
+}
 
 const INTRO_DURATION = 1.2;
 const INTRO_STAGGER = 0.4;
@@ -26,6 +44,8 @@ const REPEL_STRENGTH = 50;
 const RETURN_SPEED = 0.12;
 
 const VERTEX_SHADER = `
+precision mediump float;
+uniform float u_pointSize;
 attribute float a_alpha;
 attribute vec3 a_color;
 varying float v_alpha;
@@ -36,17 +56,25 @@ void main() {
   v_color = a_color;
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * mvPosition;
-  gl_PointSize = 1.0;
+  gl_PointSize = u_pointSize;
 }
 `;
 
 const FRAGMENT_SHADER = `
 precision mediump float;
+uniform float u_pointSize;
 varying float v_alpha;
 varying vec3 v_color;
 
 void main() {
-  gl_FragColor = vec4(v_color, v_alpha);
+  if (u_pointSize > 1.5) {
+    float dist = length(gl_PointCoord - vec2(0.5));
+    if (dist > 0.5) discard;
+    float edge = smoothstep(0.5, 0.15, dist);
+    gl_FragColor = vec4(v_color, v_alpha * edge);
+  } else {
+    gl_FragColor = vec4(v_color, v_alpha);
+  }
 }
 `;
 
@@ -290,6 +318,19 @@ export function StarParticles() {
 
 	const particlesRef = useRef<ParticleData[]>([]);
 	const introStartRef = useRef(-1);
+	const colorsRef = useRef(getParticleColors());
+
+	useEffect(() => {
+		const observer = new MutationObserver(() => {
+			colorsRef.current = getParticleColors();
+		});
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["class"],
+		});
+		return () => observer.disconnect();
+	}, []);
+
 	const buffersRef = useRef<{
 		geometry: THREE.BufferGeometry;
 		posArray: Float32Array;
@@ -298,6 +339,7 @@ export function StarParticles() {
 		posAttr: THREE.BufferAttribute;
 		alphaAttr: THREE.BufferAttribute;
 		colorAttr: THREE.BufferAttribute;
+		material: THREE.ShaderMaterial;
 		points: THREE.Points;
 	} | null>(null);
 
@@ -323,6 +365,9 @@ export function StarParticles() {
 		geometry.setAttribute("a_color", colorAttr);
 
 		const material = new THREE.ShaderMaterial({
+			uniforms: {
+				u_pointSize: { value: colorsRef.current.pointSize },
+			},
 			vertexShader: VERTEX_SHADER,
 			fragmentShader: FRAGMENT_SHADER,
 			transparent: true,
@@ -344,6 +389,7 @@ export function StarParticles() {
 			posAttr,
 			alphaAttr,
 			colorAttr,
+			material,
 			points,
 		};
 
@@ -368,14 +414,15 @@ export function StarParticles() {
 
 		const bufs = buffersRef.current;
 		if (!bufs) return;
+		const { startR, startG, startB } = colorsRef.current;
 		for (let i = 0; i < TOTAL_COUNT; i++) {
 			const p = particlesRef.current[i];
 			bufs.posArray[i * 3] = p.x;
 			bufs.posArray[i * 3 + 1] = p.y;
 			bufs.posArray[i * 3 + 2] = 0;
-			bufs.colorArray[i * 3] = 1.0;
-			bufs.colorArray[i * 3 + 1] = 1.0;
-			bufs.colorArray[i * 3 + 2] = 1.0;
+			bufs.colorArray[i * 3] = startR;
+			bufs.colorArray[i * 3 + 1] = startG;
+			bufs.colorArray[i * 3 + 2] = startB;
 			bufs.alphaArray[i] = 0;
 		}
 	}, []);
@@ -391,6 +438,8 @@ export function StarParticles() {
 		if (!renderer || !scene || !camera || !bufs || particles.length === 0)
 			return;
 
+		bufs.material.uniforms.u_pointSize.value = colorsRef.current.pointSize;
+
 		const { posArray, alphaArray, colorArray, posAttr, alphaAttr, colorAttr } =
 			bufs;
 
@@ -399,6 +448,11 @@ export function StarParticles() {
 		const introElapsed = t - introStartRef.current;
 		const introDone = introElapsed >= INTRO_DURATION + INTRO_STAGGER;
 		const m = mouse.current;
+		const {
+			targetR, targetG, targetB, startR, startG, startB,
+			alphaBoost, scatterAlpha,
+		} = colorsRef.current;
+		const scatterStart = EDGE_PARTICLES + FILL_PARTICLES;
 
 		for (let i = 0; i < TOTAL_COUNT; i++) {
 			const p = particles[i];
@@ -412,9 +466,9 @@ export function StarParticles() {
 				const eased = easeOut(progress);
 				p.x = p.spawnX + (p.homeX - p.spawnX) * eased;
 				p.y = p.spawnY + (p.homeY - p.spawnY) * eased;
-				colorArray[i * 3] = 1.0 + (TARGET_R - 1.0) * eased;
-				colorArray[i * 3 + 1] = 1.0 + (TARGET_G - 1.0) * eased;
-				colorArray[i * 3 + 2] = 1.0 + (TARGET_B - 1.0) * eased;
+				colorArray[i * 3] = startR + (targetR - startR) * eased;
+				colorArray[i * 3 + 1] = startG + (targetG - startG) * eased;
+				colorArray[i * 3 + 2] = startB + (targetB - startB) * eased;
 			} else {
 				if (m.active) {
 					const dx = p.x - m.x;
@@ -429,16 +483,19 @@ export function StarParticles() {
 				}
 				p.x += (p.homeX - p.x) * RETURN_SPEED;
 				p.y += (p.homeY - p.y) * RETURN_SPEED;
-				colorArray[i * 3] = TARGET_R;
-				colorArray[i * 3 + 1] = TARGET_G;
-				colorArray[i * 3 + 2] = TARGET_B;
+				colorArray[i * 3] = targetR;
+				colorArray[i * 3 + 1] = targetG;
+				colorArray[i * 3 + 2] = targetB;
 			}
 
 			posArray[i * 3] = p.x;
 			posArray[i * 3 + 1] = p.y;
 
 			const flicker = Math.sin(t * p.speed * 2.5 + p.phase);
-			const baseFlicker = p.baseAlpha * (0.1 + 0.9 * flicker * flicker);
+			const scatter = i >= scatterStart ? scatterAlpha : 1;
+			const baseFlicker =
+				Math.min(1, p.baseAlpha * alphaBoost * scatter) *
+				(0.1 + 0.9 * flicker * flicker);
 
 			if (!introDone) {
 				const particleTime = Math.max(

@@ -1,10 +1,47 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
 	--font-sans: var(--font-geist-sans), var(--font-suite), sans-serif;
 	--font-mono: var(--font-geist-mono), monospace;
 	--font-serif: var(--font-noto-serif-kr), serif;
-	--color-bg: #0c0a09;
+	--color-bg: var(--theme-bg);
+	--color-text: var(--theme-text);
+	--color-text-muted: var(--theme-text-muted);
+	--color-text-subtle: var(--theme-text-subtle);
+}
+
+:root {
+	--theme-bg: #fafaf9;
+	--theme-text: #44403c;
+	--theme-text-muted: #78716c;
+	--theme-text-subtle: #a8a29e;
+	--theme-particle-r: 0.12;
+	--theme-particle-g: 0.1;
+	--theme-particle-b: 0.09;
+	--theme-particle-start-r: 0.3;
+	--theme-particle-start-g: 0.3;
+	--theme-particle-start-b: 0.3;
+	--theme-particle-alpha-boost: 4.0;
+	--theme-particle-scatter-alpha: 0.45;
+	--theme-particle-point-size: 2.5;
+}
+
+.dark {
+	--theme-bg: #0c0a09;
+	--theme-text: #a1a1aa;
+	--theme-text-muted: #a1a1aa;
+	--theme-text-subtle: #71717a;
+	--theme-particle-r: 0.784;
+	--theme-particle-g: 0.745;
+	--theme-particle-b: 0.706;
+	--theme-particle-start-r: 1.0;
+	--theme-particle-start-g: 1.0;
+	--theme-particle-start-b: 1.0;
+	--theme-particle-alpha-boost: 1.0;
+	--theme-particle-scatter-alpha: 1.0;
+	--theme-particle-point-size: 1.0;
 }
 
 html,
@@ -12,4 +49,8 @@ body {
 	height: 100%;
 	margin: 0;
 	background: var(--color-bg);
+	color: var(--color-text);
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease;
 }
