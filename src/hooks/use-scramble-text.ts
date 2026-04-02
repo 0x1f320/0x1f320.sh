@@ -35,30 +35,43 @@ export function useScrambleText(
 		if (!el) return;
 
 		const steps = duration / interval;
+		let lastTime = 0;
 		let step = 0;
 
 		el.textContent = generateInitial(target, seed);
 
-		const timer = setInterval(() => {
-			step++;
-			const resolved = Math.floor((step / steps) * target.length);
+		let animId: number;
 
-			el.textContent = target
-				.split("")
-				.map((char, i) =>
-					i < resolved
-						? char
-						: CHARS[Math.floor(Math.random() * CHARS.length)],
-				)
-				.join("");
+		const tick = (time: number) => {
+			if (!lastTime) lastTime = time;
+			const elapsed = time - lastTime;
 
-			if (step >= steps) {
-				el.textContent = target;
-				clearInterval(timer);
+			if (elapsed >= interval) {
+				lastTime = time;
+				step++;
+				const resolved = Math.floor((step / steps) * target.length);
+
+				el.textContent = target
+					.split("")
+					.map((char, i) =>
+						i < resolved
+							? char
+							: CHARS[Math.floor(Math.random() * CHARS.length)],
+					)
+					.join("");
+
+				if (step >= steps) {
+					el.textContent = target;
+					return;
+				}
 			}
-		}, interval);
 
-		return () => clearInterval(timer);
+			animId = requestAnimationFrame(tick);
+		};
+
+		animId = requestAnimationFrame(tick);
+
+		return () => cancelAnimationFrame(animId);
 	}, [target, duration, interval, seed]);
 
 	return ref;
