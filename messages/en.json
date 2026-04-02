@@ -1,0 +1,10 @@
+{
+	"Home": {
+		"bio": "A software engineer based in South Korea with 5 years of experience.\nI solve problems and contribute to great customer experiences.",
+		"github": "GitHub"
+	},
+	"Theme": {
+		"dark": "Dark",
+		"light": "Light"
+	}
+}
