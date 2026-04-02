@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Serif_KR } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -12,6 +12,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
 	variable: "--font-geist-mono",
 	subsets: ["latin"],
+});
+
+const notoSerifKR = Noto_Serif_KR({
+	variable: "--font-noto-serif-kr",
+	subsets: ["latin"],
+	weight: ["400", "700"],
+	display: "swap",
 });
 
 const suite = localFont({
@@ -32,7 +39,7 @@ export default function RootLayout({
 	return (
 		<html
 			lang="ko"
-			className={`${geistSans.variable} ${geistMono.variable} ${suite.variable}`}
+			className={`${geistSans.variable} ${geistMono.variable} ${suite.variable} ${notoSerifKR.variable}`}
 		>
 			<body>
 				{children}

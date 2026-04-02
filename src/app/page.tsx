@@ -11,7 +11,7 @@ export default function Home() {
 
 	return (
 		<div className="flex h-screen items-center justify-center">
-			<main className="w-full max-w-[480px] px-6">
+			<main className="w-full max-w-[560px] px-6">
 				<div className="flex flex-col items-start gap-2">
 					<div className="h-[65px] w-[110px]">
 						<StarParticles />
@@ -24,6 +24,19 @@ export default function Home() {
 						</span>
 					</div>
 				</div>
+				<p className="mt-4 font-serif text-md leading-relaxed text-zinc-400">
+					안녕하세요. 한국에 거주하는 5년차 소프트웨어 엔지니어입니다.
+					<br />
+					문제를 해결하고, 고객 경험에 기여합니다.
+				</p>
+				<a
+					href="https://github.com/0x1f320"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="mt-6 inline-block font-mono text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+				>
+					GitHub
+				</a>
 			</main>
 		</div>
 	);
