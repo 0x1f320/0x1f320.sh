@@ -175,9 +175,8 @@ export function StarParticles() {
 		const uResolution = gl.getUniformLocation(program, "u_resolution");
 
 		const resize = () => {
-			const dpr = window.devicePixelRatio || 1;
-			canvas.width = canvas.clientWidth * dpr;
-			canvas.height = canvas.clientHeight * dpr;
+			canvas.width = canvas.clientWidth;
+			canvas.height = canvas.clientHeight;
 			gl.viewport(0, 0, canvas.width, canvas.height);
 		};
 		resize();
@@ -212,7 +211,7 @@ export function StarParticles() {
 			// 왼쪽 끝: starCx - outerR, 오른쪽 끝: starCx + outerR * TAIL_STRETCH
 			// 전체 중심: starCx + outerR * (TAIL_STRETCH - 1) / 2
 			// 이걸 w/2에 맞추려면: starCx = w/2 - outerR * (TAIL_STRETCH - 1) / 2
-			const outerR = 20 * (window.devicePixelRatio || 1);
+			const outerR = 20;
 			const starCx = w / 2 - (outerR * (TAIL_STRETCH - 1)) / 2;
 			const starCy = h * 0.42;
 			const innerR = outerR * 0.4;
