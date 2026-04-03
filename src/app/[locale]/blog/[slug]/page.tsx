@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getBlogPost, getAllBlogSlugs } from "@/lib/blog";
 import { routing } from "@/i18n/routing";
+import { Giscus } from "@/components/giscus";
 
 export async function generateStaticParams() {
 	const params: { locale: string; slug: string }[] = [];
@@ -47,6 +48,7 @@ export default async function BlogPostPage({
 			<div className="prose mt-8">
 				<MDXRemote source={post.content} />
 			</div>
+			<Giscus locale={locale} />
 		</article>
 	);
 }
