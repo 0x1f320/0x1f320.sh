@@ -1,16 +1,7 @@
-const formatters: Record<string, Intl.DateTimeFormat> = {};
-
-function getFormatter(locale: string): Intl.DateTimeFormat {
-	if (!formatters[locale]) {
-		formatters[locale] = new Intl.DateTimeFormat(locale, {
-			month: "short",
-			day: "numeric",
-		});
-	}
-	return formatters[locale];
-}
+import dayjs from "dayjs";
+import "dayjs/locale/ko";
 
 export function formatShortDate(dateStr: string, locale: string): string {
-	const date = new Date(dateStr);
-	return getFormatter(locale).format(date);
+	const d = dayjs(dateStr).locale(locale);
+	return locale === "ko" ? d.format("YYYY년 M월 D일") : d.format("MMM D, YYYY");
 }

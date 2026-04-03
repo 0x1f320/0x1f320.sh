@@ -10,6 +10,7 @@ const posts = {
 			title: s.string().max(200),
 			date: s.isodate(),
 			description: s.string().max(300).optional(),
+			tags: s.array(s.string()).default([]),
 			metadata: s.metadata(),
 			content: s.mdx(),
 		})

@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# draft blog posts
+content/blog/draft.*
+
 # velite
 /.velite/
 /generated/

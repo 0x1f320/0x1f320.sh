@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getBlogPost, getAllBlogSlugs } from "@/lib/blog";
+import { formatShortDate } from "@/lib/date";
 import { routing } from "@/i18n/routing";
 import { Giscus } from "@/components/giscus";
 import { MDXContent } from "@/components/mdx-content";
@@ -36,7 +37,7 @@ export default async function BlogPostPage({
 		<article>
 			<header>
 				<time className="text-sm text-[var(--color-text-subtle)]">
-					{post.date}
+					{formatShortDate(post.date, locale)}
 				</time>
 				<h1 className="mt-1 text-2xl font-bold text-[var(--color-text)]">
 					{post.title}
@@ -44,6 +45,11 @@ export default async function BlogPostPage({
 				<p className="mt-1 text-sm text-[var(--color-text-subtle)]">
 					{t("readingTime", { minutes: post.readingTime })}
 				</p>
+				{post.tags.length > 0 && (
+					<p className="mt-2 text-sm capitalize text-[var(--color-text-subtle)]">
+						{post.tags.join(", ")}
+					</p>
+				)}
 			</header>
 			<div className="prose mt-8">
 				<MDXContent code={post.content} />
