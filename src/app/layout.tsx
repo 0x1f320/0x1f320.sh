@@ -37,6 +37,12 @@ export default function RootLayout({
 			suppressHydrationWarning
 		>
 			<head>
+				<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+				<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+				<link rel="shortcut icon" href="/favicon.ico" />
+				<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+				<meta name="apple-mobile-web-app-title" content="0x1F320" />
+				<link rel="manifest" href="/site.webmanifest" />
 				<script
 					dangerouslySetInnerHTML={{
 						__html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme:dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})()`,
