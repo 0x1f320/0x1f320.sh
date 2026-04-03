@@ -3,7 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-	--font-sans: var(--font-geist-sans), var(--font-suite), sans-serif;
+	--font-sans: var(--font-geist-sans), sans-serif;
 	--font-mono: var(--font-geist-mono), monospace;
 	--font-serif: var(--font-noto-serif-kr), serif;
 	--color-bg: var(--theme-bg);
@@ -96,6 +96,7 @@ html,
 body {
 	height: 100%;
 	margin: 0;
+	font-family: var(--font-noto-serif-kr), serif;
 	background: var(--color-bg);
 	color: var(--color-text);
 	transition:
