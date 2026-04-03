@@ -23,8 +23,8 @@
 	--theme-particle-start-r: 0.3;
 	--theme-particle-start-g: 0.3;
 	--theme-particle-start-b: 0.3;
-	--theme-particle-alpha-boost: 4.0;
-	--theme-particle-scatter-alpha: 0.45;
+	--theme-particle-alpha-boost: 2.5;
+	--theme-particle-scatter-alpha: 1.5;
 	--theme-particle-point-size: 2.5;
 }
 

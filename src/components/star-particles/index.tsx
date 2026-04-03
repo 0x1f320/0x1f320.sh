@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { type ReactElement, useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useAnimationFrame } from "@/hooks/use-animation-frame";
 import { useMouse } from "@/hooks/use-mouse";
@@ -8,10 +8,9 @@ import { useResize } from "./hooks/use-resize";
 import { useThreeRenderer } from "./hooks/use-three-renderer";
 import { type ShapeMask, rasterizeShape } from "./rasterize-shape";
 
-const EDGE_PARTICLES = 900;
-const FILL_PARTICLES = 300;
-const SCATTER_COUNT = 500;
-const TOTAL_COUNT = EDGE_PARTICLES + FILL_PARTICLES + SCATTER_COUNT;
+const FILL_PARTICLES = 1400;
+const SCATTER_COUNT = 600;
+const TOTAL_COUNT = FILL_PARTICLES + SCATTER_COUNT;
 
 function getThemeColor(name: string, fallback: number): number {
 	if (typeof document === "undefined") return fallback;
@@ -106,6 +105,15 @@ function randomSpawn(
 
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
+function shuffled<T>(arr: T[]): T[] {
+	const a = arr.slice();
+	for (let i = a.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[a[i], a[j]] = [a[j], a[i]];
+	}
+	return a;
+}
+
 function buildParticlesFromMask(
 	mask: ShapeMask,
 	w: number,
@@ -115,6 +123,10 @@ function buildParticlesFromMask(
 
 	const particles: ParticleData[] = [];
 	const edgeSource = mask.edge.length > 0 ? mask.edge : mask.filled;
+
+	// Shuffle pixel arrays for uniform cycling
+	const fillPool = shuffled(mask.filled);
+	const edgePool = shuffled(edgeSource);
 
 	// Fit shape within container while maintaining aspect ratio
 	const padding = 0.05;
@@ -140,32 +152,11 @@ function buildParticlesFromMask(
 		oy + ny * fitH,
 	];
 
-	const JITTER = 0.006;
+	const JITTER = 0.008;
 
-	// Edge particles — sampled from edge pixels, higher alpha
-	for (let i = 0; i < EDGE_PARTICLES; i++) {
-		const src = edgeSource[Math.floor(Math.random() * edgeSource.length)];
-		const [hx, hy] = toWorld(
-			src[0] + (Math.random() - 0.5) * JITTER,
-			src[1] + (Math.random() - 0.5) * JITTER,
-		);
-		const spawn = randomSpawn(hx, hy, w, h);
-		particles.push({
-			...spawn,
-			x: spawn.spawnX,
-			y: spawn.spawnY,
-			homeX: hx,
-			homeY: hy,
-			delay: Math.random(),
-			baseAlpha: 0.12 + Math.random() * 0.4,
-			phase: Math.random() * Math.PI * 2,
-			speed: 0.3 + Math.random() * 1.5,
-		});
-	}
-
-	// Fill particles — sampled from all filled pixels, lower alpha
+	// Fill particles — uniformly distributed across filled area
 	for (let i = 0; i < FILL_PARTICLES; i++) {
-		const src = mask.filled[Math.floor(Math.random() * mask.filled.length)];
+		const src = fillPool[i % fillPool.length];
 		const [hx, hy] = toWorld(
 			src[0] + (Math.random() - 0.5) * JITTER,
 			src[1] + (Math.random() - 0.5) * JITTER,
@@ -178,17 +169,17 @@ function buildParticlesFromMask(
 			homeX: hx,
 			homeY: hy,
 			delay: Math.random(),
-			baseAlpha: 0.06 + Math.random() * 0.2,
+			baseAlpha: 0.18 + Math.random() * 0.42,
 			phase: Math.random() * Math.PI * 2,
 			speed: 0.2 + Math.random() * 1,
 		});
 	}
 
-	// Scatter particles — near filled areas, offset outward
+	// Scatter particles — cycled from shuffled edge pixels, offset outward
 	for (let i = 0; i < SCATTER_COUNT; i++) {
-		const src = mask.filled[Math.floor(Math.random() * mask.filled.length)];
+		const src = edgePool[i % edgePool.length];
 		const angle = Math.random() * Math.PI * 2;
-		const scatter = 0.025 + Math.random() * 0.075;
+		const scatter = 0.08 + Math.random() * 0.2;
 		const [hx, hy] = toWorld(
 			src[0] + Math.cos(angle) * scatter,
 			src[1] + Math.sin(angle) * scatter,
@@ -201,7 +192,7 @@ function buildParticlesFromMask(
 			homeX: hx,
 			homeY: hy,
 			delay: Math.random(),
-			baseAlpha: 0.1 + Math.random() * 0.3,
+			baseAlpha: 0.08 + Math.random() * 0.18,
 			phase: Math.random() * Math.PI * 2,
 			speed: 0.2 + Math.random() * 1,
 		});
@@ -211,12 +202,13 @@ function buildParticlesFromMask(
 }
 
 interface StarParticlesProps {
-	/** Emoji character or SVG string to render as particles. Defaults to shooting star emoji. */
-	shape?: string;
+	/** Shape to render as particles. Accepts an emoji string or a ReactElement that renders an SVG. */
+	shape?: string | ReactElement;
 }
 
 export function StarParticles({ shape = "\u{1F320}" }: StarParticlesProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
+	const shapeElRef = useRef<HTMLDivElement>(null);
 	const { rendererRef, sceneRef, cameraRef } = useThreeRenderer(containerRef);
 
 	const particlesRef = useRef<ParticleData[]>([]);
@@ -342,7 +334,19 @@ export function StarParticles({ shape = "\u{1F320}" }: StarParticlesProps) {
 	// Rasterize shape into pixel mask
 	useEffect(() => {
 		let cancelled = false;
-		rasterizeShape(shape).then((mask) => {
+
+		let source: string;
+		if (typeof shape === "string") {
+			source = shape;
+		} else {
+			// ReactElement: read rendered SVG from hidden container
+			const el = shapeElRef.current;
+			const svg = el?.querySelector("svg");
+			if (!svg) return;
+			source = new XMLSerializer().serializeToString(svg);
+		}
+
+		rasterizeShape(source).then((mask) => {
 			if (cancelled) return;
 			maskRef.current = mask;
 			rebuildParticles();
@@ -391,7 +395,7 @@ export function StarParticles({ shape = "\u{1F320}" }: StarParticlesProps) {
 			alphaBoost,
 			scatterAlpha,
 		} = colorsRef.current;
-		const scatterStart = EDGE_PARTICLES + FILL_PARTICLES;
+		const scatterStart = FILL_PARTICLES;
 		const count = particles.length;
 
 		for (let i = 0; i < count; i++) {
@@ -459,5 +463,18 @@ export function StarParticles({ shape = "\u{1F320}" }: StarParticlesProps) {
 
 	useAnimationFrame(renderRef);
 
-	return <div ref={containerRef} className="h-full w-full bg-transparent" />;
+	return (
+		<>
+			{typeof shape !== "string" && (
+				<div
+					ref={shapeElRef}
+					aria-hidden
+					className="pointer-events-none absolute h-0 w-0 overflow-hidden"
+				>
+					{shape}
+				</div>
+			)}
+			<div ref={containerRef} className="h-full w-full bg-transparent" />
+		</>
+	);
 }

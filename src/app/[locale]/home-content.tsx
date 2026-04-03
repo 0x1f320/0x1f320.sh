@@ -23,7 +23,37 @@ export function HomeContent() {
 	return (
 		<>
 			<div className="mb-4 h-[65px] w-[110px]">
-				<StarParticles />
+				<StarParticles
+					shape={
+						<svg viewBox="-5 -10 95 75">
+							<defs>
+								<mask id="star-knockout">
+									<rect x="-5" y="-10" width="95" height="75" fill="white" />
+									<path
+										fill="black"
+										stroke="black"
+										strokeWidth="10"
+										strokeLinejoin="round"
+										transform="translate(10, -8) scale(0.75)"
+										d="M2.00,39.41 L15.15,29.82 L3.98,16.69 L19.21,23.50 L24.71,8.67 L27.53,22.84 L68,8 L31.72,30.93 L40.90,43.80 L25.77,37.12 L20.24,52.24 L18.37,36.36Z"
+									/>
+								</mask>
+							</defs>
+							{/* Big star with knockout mask */}
+							<path
+								fill="currentColor"
+								mask="url(#star-knockout)"
+								d="M2.00,39.41 L15.15,29.82 L3.98,16.69 L19.21,23.50 L24.71,8.67 L27.53,22.84 L78,3 L31.72,30.93 L40.90,43.80 L25.77,37.12 L20.24,52.24 L18.37,36.36Z"
+							/>
+							{/* Small star */}
+							<path
+								fill="currentColor"
+								transform="translate(10, -8) scale(0.75)"
+								d="M2.00,39.41 L15.15,29.82 L3.98,16.69 L19.21,23.50 L24.71,8.67 L27.53,22.84 L68,8 L31.72,30.93 L40.90,43.80 L25.77,37.12 L20.24,52.24 L18.37,36.36Z"
+							/>
+						</svg>
+					}
+				/>
 			</div>
 			<div>
 				<span className="sr-only">{PREFIX}{SUFFIX}</span>
