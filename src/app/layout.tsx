@@ -23,7 +23,10 @@ const notoSerifKR = Noto_Serif_KR({
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://0x1f320.sh"),
-	title: "0x1F320",
+	title: {
+		default: "0x1F320",
+		template: "%s | 0x1F320",
+	},
 	twitter: {
 		card: "summary_large_image",
 	},

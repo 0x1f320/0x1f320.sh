@@ -1,4 +1,8 @@
 {
+	"Metadata": {
+		"siteDescription": "한국에 거주하는 소프트웨어 엔지니어의 기술 블로그. 문제 해결과 고객 경험에 대해 씁니다.",
+		"blogDescription": "소프트웨어 엔지니어링, 오픈소스, 고객 경험에 대한 글 모음"
+	},
 	"Home": {
 		"bio": "안녕하세요. 한국에 거주하는 5년차 소프트웨어 엔지니어입니다.<br></br><underline>문제를 해결</underline>하고, <underline2>고객 경험</underline2>에 기여합니다.",
 		"blog": "Blog",
