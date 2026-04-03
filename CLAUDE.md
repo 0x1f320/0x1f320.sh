@@ -12,6 +12,8 @@ Personal website built with Next.js 16 + React 19 + Tailwind CSS 4.
 - **i18n**: next-intl (ko default, en)
 - **Linter/Formatter**: Biome (tabs, double quotes)
 - **Package manager**: pnpm
+- **Content**: velite (MDX compilation, schema validation, dev watch)
+- **Comments**: giscus (GitHub Discussions)
 - **Path alias**: `@/*` → `./src/*`
 
 ## Directory structure
@@ -35,10 +37,17 @@ src/
 │       └── hooks/
 ├── fonts/
 ├── hooks/                # Shared reusable hooks (use-*.ts)
+├── lib/
+│   ├── blog.ts           # Blog data access (imports from velite output)
+│   └── date.ts           # Date formatting utilities
 └── proxy.ts              # next-intl middleware (locale detection)
+content/
+└── blog/                 # MDX blog posts ({slug}.{locale}.mdx)
 locales/
 ├── ko.json               # Korean translations (default)
 └── en.json               # English translations
+generated/
+└── content/              # velite output (gitignored, auto-generated)
 ```
 
 ## i18n
@@ -54,4 +63,22 @@ locales/
 - Component-specific hooks live in `components/<name>/hooks/`, reusable hooks live in `src/hooks/`
 - Hook files are named `use-<name>.ts` (kebab-case)
 - Client components must have `"use client"` directive
-- Run `pnpm build` to verify TypeScript and build after changes
+- Run `pnpm build` to verify TypeScript and build after changes (this runs `velite && next build`)
+
+## Blog
+
+- Blog posts live in `content/blog/{slug}.{locale}.mdx` (e.g., `hello-world.ko.mdx`, `hello-world.en.mdx`)
+- Frontmatter fields: `title`, `date` (YYYY-MM-DD), `description` (optional), `tags` (optional, string array)
+- velite compiles MDX at build time with `remark-gfm` (tables, strikethrough) and `rehype-pretty-code` (syntax highlighting with dual light/dark themes)
+- `MDXContent` client component renders velite's compiled function-body MDX output
+- Reading time is auto-calculated by velite's `s.metadata()`
+- In dev, `velite --watch` recompiles on MDX changes → `generated/content/posts.json` updates → Turbopack picks it up
+- Code blocks use `shiki` with CSS variables (`--shiki-light`/`--shiki-dark`) for theme switching
+- Tags use English keys in frontmatter (e.g., `tags: ["blog", "nextjs"]`), display translations come from `locales/{locale}.json` under `Blog.tags`. Tag keys must not contain `.` (next-intl treats it as nesting). When adding a new tag, add the translation to both locale files
+
+## Theme
+
+- Dark/light mode via `.dark` class on `<html>`, toggled by `useTheme()` hook
+- Theme script in `<head>` prevents FOUC by reading localStorage before paint
+- `color-scheme: dark` on `.dark` class ensures native UI (scrollbars) follows theme
+- giscus comments sync theme via `@giscus/react` props — component waits for hydration (`mounted` state) before rendering to avoid incorrect initial theme

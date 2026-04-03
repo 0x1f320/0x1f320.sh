@@ -18,6 +18,7 @@ const notoSerifKR = Noto_Serif_KR({
 	subsets: ["latin"],
 	weight: ["400", "700"],
 	display: "swap",
+	adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
