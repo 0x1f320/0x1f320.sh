@@ -7,7 +7,9 @@
 	"Blog": {
 		"title": "Blog",
 		"empty": "No posts yet.",
-		"readingTime": "{minutes} min read"
+		"readingTime": "{minutes} min read",
+		"tags": {
+		}
 	},
 	"Theme": {
 		"dark": "Dark",

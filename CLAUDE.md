@@ -68,12 +68,13 @@ generated/
 ## Blog
 
 - Blog posts live in `content/blog/{slug}.{locale}.mdx` (e.g., `hello-world.ko.mdx`, `hello-world.en.mdx`)
-- Frontmatter fields: `title`, `date` (YYYY-MM-DD), `description` (optional)
+- Frontmatter fields: `title`, `date` (YYYY-MM-DD), `description` (optional), `tags` (optional, string array)
 - velite compiles MDX at build time with `remark-gfm` (tables, strikethrough) and `rehype-pretty-code` (syntax highlighting with dual light/dark themes)
 - `MDXContent` client component renders velite's compiled function-body MDX output
 - Reading time is auto-calculated by velite's `s.metadata()`
 - In dev, `velite --watch` recompiles on MDX changes → `generated/content/posts.json` updates → Turbopack picks it up
 - Code blocks use `shiki` with CSS variables (`--shiki-light`/`--shiki-dark`) for theme switching
+- Tags use English keys in frontmatter (e.g., `tags: ["blog", "nextjs"]`), display translations come from `locales/{locale}.json` under `Blog.tags`. Tag keys must not contain `.` (next-intl treats it as nesting). When adding a new tag, add the translation to both locale files
 
 ## Theme
 

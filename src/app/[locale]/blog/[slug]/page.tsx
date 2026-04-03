@@ -46,8 +46,8 @@ export default async function BlogPostPage({
 					{t("readingTime", { minutes: post.readingTime })}
 				</p>
 				{post.tags.length > 0 && (
-					<p className="mt-2 text-sm capitalize text-[var(--color-text-subtle)]">
-						{post.tags.join(", ")}
+					<p className="mt-2 text-sm text-[var(--color-text-subtle)]">
+						{post.tags.map((tag) => t(`tags.${tag}`)).join(", ")}
 					</p>
 				)}
 			</header>
