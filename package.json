@@ -3,8 +3,8 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "portless run --name 0x1f320 next dev",
-		"build": "next build",
+		"dev": "velite --watch & portless run --name 0x1f320 next dev",
+		"build": "velite && next build",
 		"start": "next start",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
@@ -13,16 +13,15 @@
 	"dependencies": {
 		"@giscus/react": "^3.1.0",
 		"@vercel/analytics": "^2.0.1",
-		"gray-matter": "^4.0.3",
 		"next": "16.2.2",
 		"next-intl": "^4.9.0",
-		"next-mdx-remote": "^6.0.0",
 		"react": "19.2.4",
 		"react-dom": "19.2.4",
 		"rehype-pretty-code": "^0.14.3",
 		"remark-gfm": "^4.0.1",
 		"shiki": "^4.0.2",
-		"three": "^0.183.2"
+		"three": "^0.183.2",
+		"velite": "^0.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.10",

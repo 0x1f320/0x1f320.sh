@@ -14,7 +14,7 @@ export default async function BlogPage({
 	setRequestLocale(locale);
 
 	const t = await getTranslations("Blog");
-	const posts = await getAllBlogPosts(locale);
+	const posts = getAllBlogPosts(locale);
 
 	const postsByYear = new Map<string, typeof posts>();
 	for (const post of posts) {

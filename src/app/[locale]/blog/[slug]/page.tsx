@@ -1,18 +1,16 @@
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { MDXRemote } from "next-mdx-remote/rsc";
-import rehypePrettyCode from "rehype-pretty-code";
-import remarkGfm from "remark-gfm";
 import { getBlogPost, getAllBlogSlugs } from "@/lib/blog";
 import { routing } from "@/i18n/routing";
 import { Giscus } from "@/components/giscus";
+import { MDXContent } from "@/components/mdx-content";
 
 export async function generateStaticParams() {
 	const params: { locale: string; slug: string }[] = [];
 
 	for (const locale of routing.locales) {
-		const slugs = await getAllBlogSlugs(locale);
+		const slugs = getAllBlogSlugs(locale);
 		for (const slug of slugs) {
 			params.push({ locale, slug });
 		}
@@ -29,7 +27,7 @@ export default async function BlogPostPage({
 	const { locale, slug } = await params;
 	setRequestLocale(locale);
 
-	const post = await getBlogPost(slug, locale);
+	const post = getBlogPost(slug, locale);
 	if (!post) notFound();
 
 	const t = await getTranslations("Blog");
@@ -48,27 +46,7 @@ export default async function BlogPostPage({
 				</p>
 			</header>
 			<div className="prose mt-8">
-				<MDXRemote
-					source={post.content}
-					options={{
-						mdxOptions: {
-							remarkPlugins: [remarkGfm],
-							rehypePlugins: [
-								[
-									rehypePrettyCode,
-									{
-										theme: {
-											dark: "github-dark-default",
-											light: "github-light-default",
-										},
-										keepBackground: false,
-									defaultLang: { inline: "plaintext", block: "plaintext" },
-									},
-								],
-							],
-						},
-					}}
-				/>
+				<MDXContent code={post.content} />
 			</div>
 			<Giscus locale={locale} />
 		</article>

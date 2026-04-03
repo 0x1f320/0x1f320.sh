@@ -128,6 +128,7 @@
 	background: color-mix(in srgb, var(--color-text-subtle) 15%, transparent);
 	padding: 0.15em 0.35em;
 	border-radius: 0.25em;
+	white-space: nowrap;
 }
 
 .prose pre {
