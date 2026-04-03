@@ -9,6 +9,8 @@
 		"empty": "No posts yet.",
 		"readingTime": "{minutes} min read",
 		"tags": {
+			"open-source": "Open Source",
+			"opinion": "Opinion"
 		}
 	},
 	"Theme": {
