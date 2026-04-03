@@ -1,0 +1,45 @@
+---
+title: "Unified Versions with pnpm Catalogs"
+date: "2025-09-14"
+description: "Manage dependency versions in one place across a monorepo."
+---
+
+## The Problem
+
+Different packages in a monorepo end up with different React versions.
+
+```
+packages/app: react@18.2.0
+packages/ui:  react@18.3.1
+packages/web: react@19.0.0
+```
+
+## pnpm Catalogs
+
+Define a catalog in `pnpm-workspace.yaml`.
+
+```yaml
+catalog:
+  react: ^19.0.0
+  react-dom: ^19.0.0
+  typescript: ^5.7.0
+```
+
+Reference it from each package's `package.json`.
+
+```json
+{
+  "dependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  }
+}
+```
+
+## Benefits
+
+- Prevents version mismatches
+- Single place to update on upgrade
+- `pnpm install` errors if a version doesn't match the catalog
+
+> Centralize version management, decentralize usage.

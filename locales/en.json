@@ -5,7 +5,9 @@
 		"github": "GitHub"
 	},
 	"Blog": {
-		"title": "Blog"
+		"title": "Blog",
+		"empty": "No posts yet.",
+		"readingTime": "{minutes} min read"
 	},
 	"Theme": {
 		"dark": "Dark",

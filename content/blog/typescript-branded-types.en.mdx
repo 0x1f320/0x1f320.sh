@@ -1,0 +1,46 @@
+---
+title: "Safe IDs with TypeScript Branded Types"
+date: "2026-03-20"
+description: "Catch mixed-up string IDs at compile time, not in production."
+---
+
+## The Problem
+
+In most codebases, IDs are just `string`.
+
+```typescript
+function getUser(userId: string) { /* ... */ }
+function getOrder(orderId: string) { /* ... */ }
+
+const orderId = "order_abc123";
+getUser(orderId); // No compile error — blows up at runtime
+```
+
+Because both `userId` and `orderId` are `string`, TypeScript can't tell them apart.
+
+## Branded Types
+
+Attach a phantom property to make them structurally incompatible.
+
+```typescript
+type Brand<T, B extends string> = T & { readonly __brand: B };
+
+type UserId = Brand<string, "UserId">;
+type OrderId = Brand<string, "OrderId">;
+
+function getUser(userId: UserId) { /* ... */ }
+
+const orderId = "order_abc123" as OrderId;
+getUser(orderId);
+// TS2345: Argument of type 'OrderId' is not assignable to parameter of type 'UserId'.
+```
+
+Now the compiler catches it.
+
+## When to Use
+
+- Multiple ID kinds share the same primitive type
+- Parsing external API responses where you want clear boundaries
+- You want type safety at zero runtime cost
+
+> Branded types don't exist at runtime. They're a purely compile-time safety net.

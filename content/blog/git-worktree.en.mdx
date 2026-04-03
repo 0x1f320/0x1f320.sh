@@ -1,0 +1,30 @@
+---
+title: "Eliminate Context Switching with git worktree"
+date: "2026-02-15"
+description: "Work on multiple branches simultaneously without switching."
+---
+
+## The Cost of Branch Switching
+
+To review a PR: `git stash` → `git checkout` → review → `git checkout -` → `git stash pop`. You might also need to reinstall node_modules.
+
+## worktree
+
+```bash
+git worktree add ../review-branch feature/login
+```
+
+The branch gets checked out in a separate directory. Your original directory stays untouched.
+
+```bash
+# Clean up when done
+git worktree remove ../review-branch
+```
+
+## Real-World Patterns
+
+- Hotfixes: patch `main` without interrupting current work
+- PR reviews: dedicated worktree for reviewers
+- CI comparisons: build two branches side by side
+
+> Stash is a workaround. Worktree is a structural solution.

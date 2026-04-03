@@ -1,0 +1,40 @@
+---
+title: "SVG 아이콘 시스템 구축하기"
+date: "2025-10-08"
+description: "아이콘 폰트 대신 SVG 스프라이트를 선택한 이유와 구현."
+---
+
+## 아이콘 폰트의 문제
+
+- 안티앨리어싱이 일관되지 않음
+- 단색만 가능
+- 접근성 이슈 — 스크린 리더가 의미 없는 문자를 읽음
+
+## SVG 스프라이트
+
+```html
+<!-- sprite.svg -->
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="icon-arrow" viewBox="0 0 24 24">
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </symbol>
+</svg>
+```
+
+```tsx
+function Icon({ name, ...props }: { name: string } & SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...props}>
+      <use href={`/sprite.svg#icon-${name}`} />
+    </svg>
+  );
+}
+```
+
+## 장점
+
+- 색상, 크기를 CSS로 제어 가능
+- HTTP 요청 1회 (캐시됨)
+- 접근성 — `aria-label` 사용 가능
+
+> 아이콘은 텍스트가 아닙니다. 이미지로 다루세요.

@@ -1,0 +1,39 @@
+---
+title: "Adding Keyboard Shortcuts to Web Apps"
+date: "2024-08-05"
+description: "Accessibility and power-user experience in one move."
+---
+
+## Why
+
+Everything is doable with a mouse, but repetitive tasks are overwhelmingly faster with keyboard. Tools like Figma, Linear, and Notion differentiate through keyboard shortcuts.
+
+## Implementation
+
+```typescript
+useEffect(() => {
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      openCommandPalette();
+    }
+  }
+
+  document.addEventListener("keydown", handleKeyDown);
+  return () => document.removeEventListener("keydown", handleKeyDown);
+}, []);
+```
+
+## Considerations
+
+- **Ignore when input/textarea is focused** — shortcuts shouldn't fire while typing
+- **Avoid OS shortcut conflicts** — don't use `Cmd+W` and similar
+- **Accessibility** — use the `aria-keyshortcuts` attribute
+- **Discoverability** — show shortcut list with `?`
+
+## Libraries
+
+- `tinykeys` — 1KB, simple API
+- `hotkeys-js` — more features
+
+> Shortcuts are a gift for power users. But everything must work without them.

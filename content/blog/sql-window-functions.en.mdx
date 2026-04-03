@@ -1,0 +1,52 @@
+---
+title: "Window Functions Cheat Sheet"
+date: "2025-06-11"
+description: "SQL aggregation patterns without GROUP BY."
+---
+
+## Basic Structure
+
+```sql
+SELECT
+  name,
+  department,
+  salary,
+  AVG(salary) OVER (PARTITION BY department) AS dept_avg
+FROM employees;
+```
+
+Attach aggregate values to each row without `GROUP BY`.
+
+## Common Functions
+
+### ROW_NUMBER — Sequential numbering
+
+```sql
+ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC)
+```
+
+### RANK — Ranking with ties
+
+```sql
+RANK() OVER (ORDER BY score DESC)
+```
+
+### LAG / LEAD — Previous/next row
+
+```sql
+LAG(salary, 1) OVER (ORDER BY hire_date)
+```
+
+### SUM — Running total
+
+```sql
+SUM(revenue) OVER (ORDER BY month ROWS UNBOUNDED PRECEDING)
+```
+
+## Performance Tips
+
+- Index on `PARTITION BY` columns helps
+- Limit window frame with `ROWS BETWEEN` to reduce memory
+- Window functions are almost always faster than subqueries
+
+> Do it in SQL if you can. Don't loop in the application.

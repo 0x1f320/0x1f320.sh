@@ -1,0 +1,42 @@
+---
+title: "ESLint + Prettier에서 Biome으로 이사하기"
+date: "2024-12-10"
+description: "마이그레이션 과정과 체감 차이."
+---
+
+## 왜 옮겼나
+
+- ESLint + Prettier 설정 파일만 5개
+- 플러그인 버전 충돌
+- CI에서 린트 + 포맷에 30초 소요
+
+## Biome
+
+린터와 포매터가 하나의 바이너리에 들어있습니다. Rust로 작성되어 빠릅니다.
+
+```bash
+pnpm add -D @biomejs/biome
+pnpm biome init
+```
+
+## 마이그레이션
+
+```bash
+pnpm biome migrate eslint --write
+pnpm biome migrate prettier --write
+```
+
+기존 규칙 대부분을 자동 변환해줍니다. 안 되는 건 수동으로 `biome.json`에 추가.
+
+## 체감 차이
+
+- CI 린트 시간: 30초 → 2초
+- 설정 파일: 5개 → 1개 (`biome.json`)
+- 에디터 저장 시 포맷: 체감상 즉시
+
+## 아쉬운 점
+
+- ESLint 플러그인 생태계를 전부 쓸 수는 없음
+- 일부 규칙이 아직 미구현
+
+> 완벽할 필요는 없습니다. 95%의 규칙이 10배 빨리 돌면 그게 이득입니다.

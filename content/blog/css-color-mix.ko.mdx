@@ -1,0 +1,35 @@
+---
+title: "color-mix()로 디자인 토큰 줄이기"
+date: "2026-03-10"
+description: "CSS 네이티브 함수 하나로 투명도, 틴트, 셰이드를 전부 처리하는 방법."
+---
+
+## 문제
+
+디자인 시스템에서 색상 변형이 필요할 때마다 토큰을 추가하게 됩니다.
+
+```css
+--color-primary: #3b82f6;
+--color-primary-light: #93bbfd;
+--color-primary-dark: #1e40af;
+--color-primary-10: rgba(59, 130, 246, 0.1);
+```
+
+## color-mix()
+
+```css
+.badge {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.button-hover {
+  background: color-mix(in srgb, var(--color-primary), black 20%);
+}
+```
+
+하나의 기본 색상에서 파생할 수 있으니 토큰이 줄어듭니다.
+
+## 브라우저 지원
+
+2024년 기준 모든 모던 브라우저에서 지원합니다. IE는 이미 죽었으니 신경 쓰지 마세요.

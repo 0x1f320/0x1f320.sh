@@ -1,0 +1,46 @@
+---
+title: "Validating API Responses with Zod"
+date: "2025-11-18"
+description: "Don't trust external APIs — guarantee types at runtime."
+---
+
+## The Problem
+
+TypeScript types only exist at compile time. If an external API changes its schema, code using `as` casts will break silently.
+
+```typescript
+const data = await fetch("/api/users").then((r) => r.json()) as User[];
+// What if the API changes to { users: User[] }? Runtime error
+```
+
+## Zod Schema
+
+```typescript
+import { z } from "zod";
+
+const UserSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email(),
+});
+
+const UsersResponse = z.array(UserSchema);
+
+type User = z.infer<typeof UserSchema>;
+```
+
+## Usage
+
+```typescript
+const raw = await fetch("/api/users").then((r) => r.json());
+const users = UsersResponse.parse(raw);
+// Throws here if schema doesn't match — no silent failures
+```
+
+## When to Use
+
+- External API responses
+- User input (forms, query params)
+- Environment variable parsing
+
+> Don't trust at system boundaries. Validate.

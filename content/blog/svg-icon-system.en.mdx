@@ -1,0 +1,40 @@
+---
+title: "Building an SVG Icon System"
+date: "2025-10-08"
+description: "Why SVG sprites over icon fonts, and how to implement them."
+---
+
+## Problems with Icon Fonts
+
+- Inconsistent anti-aliasing
+- Single color only
+- Accessibility issues — screen readers read meaningless characters
+
+## SVG Sprites
+
+```html
+<!-- sprite.svg -->
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="icon-arrow" viewBox="0 0 24 24">
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </symbol>
+</svg>
+```
+
+```tsx
+function Icon({ name, ...props }: { name: string } & SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...props}>
+      <use href={`/sprite.svg#icon-${name}`} />
+    </svg>
+  );
+}
+```
+
+## Benefits
+
+- Color and size controlled via CSS
+- Single HTTP request (cached)
+- Accessible — use `aria-label`
+
+> Icons aren't text. Treat them as images.

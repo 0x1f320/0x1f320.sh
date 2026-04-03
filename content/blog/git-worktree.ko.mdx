@@ -1,0 +1,30 @@
+---
+title: "git worktree로 컨텍스트 스위칭 없애기"
+date: "2026-02-15"
+description: "브랜치를 바꾸지 않고 여러 브랜치를 동시에 작업하는 방법."
+---
+
+## 브랜치 전환의 비용
+
+PR 리뷰를 하려면 `git stash` → `git checkout` → 리뷰 → `git checkout -` → `git stash pop`. 이 과정에서 node_modules 재설치가 필요할 수도 있습니다.
+
+## worktree
+
+```bash
+git worktree add ../review-branch feature/login
+```
+
+별도 디렉토리에 해당 브랜치가 체크아웃됩니다. 원래 디렉토리는 그대로 유지.
+
+```bash
+# 작업 끝나면 정리
+git worktree remove ../review-branch
+```
+
+## 실전 사용 패턴
+
+- 핫픽스: 현재 작업 중단 없이 `main`에서 바로 수정
+- PR 리뷰: 리뷰어 전용 worktree
+- CI 비교: 두 브랜치를 동시에 빌드해서 비교
+
+> stash는 임시방편이고, worktree는 구조적 해결입니다.

@@ -1,0 +1,46 @@
+---
+title: "My 2026 Terminal Setup"
+date: "2026-04-01"
+description: "The terminal tools I'm currently using."
+---
+
+## Shell
+
+**zsh** with no plugins. Removed Oh My Zsh because it was slow. Anything I need goes straight into `.zshrc`.
+
+```bash
+# Just the aliases I actually use
+alias g="git"
+alias gp="git push"
+alias gl="git log --oneline -20"
+alias dev="pnpm dev"
+```
+
+## Terminal Emulator
+
+**Ghostty**. GPU-accelerated and fast, simple config. Used iTerm2 before — never looked back.
+
+## Prompt
+
+**Starship**. Built in Rust so it's fast, single config file.
+
+```toml
+[character]
+success_symbol = "[›](bold green)"
+error_symbol = "[›](bold red)"
+
+[git_branch]
+format = "[$branch]($style) "
+
+[nodejs]
+disabled = true
+```
+
+## Other Tools
+
+- **eza** — `ls` replacement with icons, colors, Git status
+- **zoxide** — `cd` replacement that remembers frequently visited directories
+- **fzf** — fuzzy finder, essential for `Ctrl+R` history search
+- **bat** — `cat` replacement with syntax highlighting
+
+> Fewer tools is better. Keep only what you actually use.
