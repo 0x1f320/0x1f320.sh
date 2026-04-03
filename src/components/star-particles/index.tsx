@@ -6,13 +6,12 @@ import { useAnimationFrame } from "@/hooks/use-animation-frame";
 import { useMouse } from "@/hooks/use-mouse";
 import { useResize } from "./hooks/use-resize";
 import { useThreeRenderer } from "./hooks/use-three-renderer";
+import { type ShapeMask, rasterizeShape } from "./rasterize-shape";
 
 const EDGE_PARTICLES = 900;
 const FILL_PARTICLES = 300;
 const SCATTER_COUNT = 500;
 const TOTAL_COUNT = EDGE_PARTICLES + FILL_PARTICLES + SCATTER_COUNT;
-const POINTS = 6;
-const TAIL_STRETCH = 3.5;
 
 function getThemeColor(name: string, fallback: number): number {
 	if (typeof document === "undefined") return fallback;
@@ -78,107 +77,6 @@ void main() {
 }
 `;
 
-function generateStarVertices(
-	cx: number,
-	cy: number,
-	outerR: number,
-	innerR: number,
-): [number, number][] {
-	const verts: [number, number][] = [];
-	const jitterSeed = [
-		0.12, -0.08, 0.15, -0.05, 0.09, -0.13, 0.07, -0.11, 0.14, -0.06, 0.1,
-		-0.09,
-	];
-	const angleSeed = [
-		0.04, -0.03, 0.05, -0.02, 0.03, -0.04, 0.02, -0.05, 0.04, -0.03, 0.03,
-		-0.02,
-	];
-	for (let i = 0; i < POINTS * 2; i++) {
-		const baseAngle = (Math.PI / POINTS) * i + Math.PI;
-		const angle = baseAngle + angleSeed[i % angleSeed.length] * 0.5;
-		const isOuter = i % 2 === 0;
-		let r = isOuter ? outerR : innerR;
-		if (i === POINTS) {
-			r = outerR * TAIL_STRETCH;
-		}
-		if (i === POINTS - 1 || i === POINTS + 1) {
-			r = innerR * 1.3;
-		}
-		if (i !== POINTS) {
-			r *= 1 + jitterSeed[i % jitterSeed.length];
-		}
-		verts.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r]);
-	}
-	return verts;
-}
-
-function isInsidePolygon(
-	x: number,
-	y: number,
-	cx: number,
-	cy: number,
-	verts: [number, number][],
-) {
-	const dx = x - cx;
-	const dy = y - cy;
-	const angle = (Math.atan2(dy, dx) + Math.PI * 2) % (Math.PI * 2);
-	const dist = Math.sqrt(dx * dx + dy * dy);
-
-	const n = verts.length;
-	for (let i = 0; i < n; i++) {
-		const v0 = verts[i];
-		const v1 = verts[(i + 1) % n];
-		const a0 = Math.atan2(v0[1] - cy, v0[0] - cx);
-		const a1 = Math.atan2(v1[1] - cy, v1[0] - cx);
-
-		let start = (a0 + Math.PI * 2) % (Math.PI * 2);
-		let end = (a1 + Math.PI * 2) % (Math.PI * 2);
-
-		let contains = false;
-		if (start <= end) {
-			contains = angle >= start && angle <= end;
-		} else {
-			contains = angle >= start || angle <= end;
-		}
-
-		if (contains) {
-			const t0 =
-				(v0[0] - cx) * Math.sin(angle) - (v0[1] - cy) * Math.cos(angle);
-			const t1 =
-				(v1[0] - cx) * Math.sin(angle) - (v1[1] - cy) * Math.cos(angle);
-			if (Math.abs(t0 - t1) < 0.001) continue;
-			const frac = t0 / (t0 - t1);
-			const ix = v0[0] + (v1[0] - v0[0]) * frac;
-			const iy = v0[1] + (v1[1] - v0[1]) * frac;
-			const maxDist = Math.sqrt((ix - cx) ** 2 + (iy - cy) ** 2);
-			return dist <= maxDist;
-		}
-	}
-	return false;
-}
-
-function randomPointInShape(
-	cx: number,
-	cy: number,
-	verts: [number, number][],
-	maxR: number,
-): [number, number] {
-	for (;;) {
-		const x = cx + (Math.random() - 0.5) * maxR * 2;
-		const y = cy + (Math.random() - 0.5) * maxR * 2;
-		if (isInsidePolygon(x, y, cx, cy, verts)) {
-			const dx = x - cx;
-			const dy = y - cy;
-			const dist = Math.sqrt(dx * dx + dy * dy);
-			const scatter = (dist / maxR) * maxR * 0.06;
-			return [
-				x + (Math.random() - 0.5) * scatter,
-				y + (Math.random() - 0.5) * scatter,
-			];
-		}
-	}
-}
-
 interface ParticleData {
 	x: number;
 	y: number;
@@ -208,100 +106,100 @@ function randomSpawn(
 
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
-function buildParticles(w: number, h: number): ParticleData[] {
-	const outerR = 20;
-	const starCx = w / 2 - (outerR * (TAIL_STRETCH - 1)) / 2;
-	const starCy = h * 0.42;
-	const innerR = outerR * 0.4;
-	const maxR = outerR * TAIL_STRETCH;
+function buildParticlesFromMask(
+	mask: ShapeMask,
+	w: number,
+	h: number,
+): ParticleData[] {
+	if (mask.filled.length === 0) return [];
 
-	const verts = generateStarVertices(starCx, starCy, outerR, innerR);
 	const particles: ParticleData[] = [];
+	const edgeSource = mask.edge.length > 0 ? mask.edge : mask.filled;
 
-	const rotAngle = (-25 * Math.PI) / 180;
-	const rotCos = Math.cos(rotAngle);
-	const rotSin = Math.sin(rotAngle);
-	const pivotX = w / 2;
-	const pivotY = h / 2;
+	// Fit shape within container while maintaining aspect ratio
+	const padding = 0.05;
+	const availW = w * (1 - padding * 2);
+	const availH = h * (1 - padding * 2);
+	const containerAspect = availW / availH;
 
-	const rotate = (ox: number, oy: number) => {
-		const rx = ox - pivotX;
-		const ry = oy - pivotY;
-		return {
-			x: pivotX + rx * rotCos - ry * rotSin,
-			y: pivotY + rx * rotSin + ry * rotCos,
-		};
-	};
+	let fitW: number;
+	let fitH: number;
+	if (mask.aspect > containerAspect) {
+		fitW = availW;
+		fitH = availW / mask.aspect;
+	} else {
+		fitH = availH;
+		fitW = availH * mask.aspect;
+	}
 
+	const ox = (w - fitW) / 2;
+	const oy = (h - fitH) / 2;
+
+	const toWorld = (nx: number, ny: number): [number, number] => [
+		ox + nx * fitW,
+		oy + ny * fitH,
+	];
+
+	const JITTER = 0.006;
+
+	// Edge particles — sampled from edge pixels, higher alpha
 	for (let i = 0; i < EDGE_PARTICLES; i++) {
-		let ox: number;
-		let oy: number;
-		for (;;) {
-			[ox, oy] = randomPointInShape(starCx, starCy, verts, maxR);
-			const dx0 = ox - starCx;
-			const dy0 = oy - starCy;
-			const dist = Math.sqrt(dx0 * dx0 + dy0 * dy0);
-			if (Math.random() < (dist / maxR) ** 1.5) break;
-		}
-
-		const dx = ox - starCx;
-		const isInTail = dx > outerR;
-		const tailProgress = isInTail ? (dx - outerR) / (maxR - outerR) : 0;
-		const fadeFactor = isInTail ? (1 - tailProgress) ** 2 : 1;
-
-		const { x, y } = rotate(ox, oy);
-		const spawn = randomSpawn(x, y, w, h);
+		const src = edgeSource[Math.floor(Math.random() * edgeSource.length)];
+		const [hx, hy] = toWorld(
+			src[0] + (Math.random() - 0.5) * JITTER,
+			src[1] + (Math.random() - 0.5) * JITTER,
+		);
+		const spawn = randomSpawn(hx, hy, w, h);
 		particles.push({
 			...spawn,
 			x: spawn.spawnX,
 			y: spawn.spawnY,
-			homeX: x,
-			homeY: y,
+			homeX: hx,
+			homeY: hy,
 			delay: Math.random(),
-			baseAlpha: (0.12 + Math.random() * 0.4) * fadeFactor,
+			baseAlpha: 0.12 + Math.random() * 0.4,
 			phase: Math.random() * Math.PI * 2,
 			speed: 0.3 + Math.random() * 1.5,
 		});
 	}
 
+	// Fill particles — sampled from all filled pixels, lower alpha
 	for (let i = 0; i < FILL_PARTICLES; i++) {
-		const [ox, oy] = randomPointInShape(starCx, starCy, verts, maxR);
-
-		const dx = ox - starCx;
-		const isInTail = dx > outerR;
-		const tailProgress = isInTail ? (dx - outerR) / (maxR - outerR) : 0;
-		const fadeFactor = isInTail ? (1 - tailProgress) ** 2 : 1;
-
-		const { x, y } = rotate(ox, oy);
-		const spawn = randomSpawn(x, y, w, h);
+		const src = mask.filled[Math.floor(Math.random() * mask.filled.length)];
+		const [hx, hy] = toWorld(
+			src[0] + (Math.random() - 0.5) * JITTER,
+			src[1] + (Math.random() - 0.5) * JITTER,
+		);
+		const spawn = randomSpawn(hx, hy, w, h);
 		particles.push({
 			...spawn,
 			x: spawn.spawnX,
 			y: spawn.spawnY,
-			homeX: x,
-			homeY: y,
+			homeX: hx,
+			homeY: hy,
 			delay: Math.random(),
-			baseAlpha: (0.06 + Math.random() * 0.2) * fadeFactor,
+			baseAlpha: 0.06 + Math.random() * 0.2,
 			phase: Math.random() * Math.PI * 2,
 			speed: 0.2 + Math.random() * 1,
 		});
 	}
 
+	// Scatter particles — near filled areas, offset outward
 	for (let i = 0; i < SCATTER_COUNT; i++) {
-		const [ox, oy] = randomPointInShape(starCx, starCy, verts, maxR);
+		const src = mask.filled[Math.floor(Math.random() * mask.filled.length)];
 		const angle = Math.random() * Math.PI * 2;
-		const scatter = outerR * (0.1 + Math.random() * 0.5);
-		const sx = ox + Math.cos(angle) * scatter;
-		const sy = oy + Math.sin(angle) * scatter;
-
-		const { x, y } = rotate(sx, sy);
-		const spawn = randomSpawn(x, y, w, h);
+		const scatter = 0.025 + Math.random() * 0.075;
+		const [hx, hy] = toWorld(
+			src[0] + Math.cos(angle) * scatter,
+			src[1] + Math.sin(angle) * scatter,
+		);
+		const spawn = randomSpawn(hx, hy, w, h);
 		particles.push({
 			...spawn,
 			x: spawn.spawnX,
 			y: spawn.spawnY,
-			homeX: x,
-			homeY: y,
+			homeX: hx,
+			homeY: hy,
 			delay: Math.random(),
 			baseAlpha: 0.1 + Math.random() * 0.3,
 			phase: Math.random() * Math.PI * 2,
@@ -312,13 +210,20 @@ function buildParticles(w: number, h: number): ParticleData[] {
 	return particles;
 }
 
-export function StarParticles() {
+interface StarParticlesProps {
+	/** Emoji character or SVG string to render as particles. Defaults to shooting star emoji. */
+	shape?: string;
+}
+
+export function StarParticles({ shape = "\u{1F320}" }: StarParticlesProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { rendererRef, sceneRef, cameraRef } = useThreeRenderer(containerRef);
 
 	const particlesRef = useRef<ParticleData[]>([]);
 	const introStartRef = useRef(-1);
 	const colorsRef = useRef(getParticleColors());
+	const maskRef = useRef<ShapeMask | null>(null);
+	const sizeRef = useRef({ w: 0, h: 0 });
 
 	useEffect(() => {
 		const observer = new MutationObserver(() => {
@@ -408,24 +313,52 @@ export function StarParticles() {
 
 	const mouse = useMouse(canvasRef);
 
-	const handleResize = useCallback((w: number, h: number) => {
-		particlesRef.current = buildParticles(w, h);
+	const rebuildParticles = useCallback(() => {
+		const mask = maskRef.current;
+		const { w, h } = sizeRef.current;
+		if (!mask || !w || !h) return;
+
+		particlesRef.current = buildParticlesFromMask(mask, w, h);
 		introStartRef.current = -1;
 
 		const bufs = buffersRef.current;
 		if (!bufs) return;
 		const { startR, startG, startB } = colorsRef.current;
+		const count = particlesRef.current.length;
 		for (let i = 0; i < TOTAL_COUNT; i++) {
-			const p = particlesRef.current[i];
-			bufs.posArray[i * 3] = p.x;
-			bufs.posArray[i * 3 + 1] = p.y;
-			bufs.posArray[i * 3 + 2] = 0;
-			bufs.colorArray[i * 3] = startR;
-			bufs.colorArray[i * 3 + 1] = startG;
-			bufs.colorArray[i * 3 + 2] = startB;
+			if (i < count) {
+				const p = particlesRef.current[i];
+				bufs.posArray[i * 3] = p.x;
+				bufs.posArray[i * 3 + 1] = p.y;
+				bufs.posArray[i * 3 + 2] = 0;
+				bufs.colorArray[i * 3] = startR;
+				bufs.colorArray[i * 3 + 1] = startG;
+				bufs.colorArray[i * 3 + 2] = startB;
+			}
 			bufs.alphaArray[i] = 0;
 		}
 	}, []);
+
+	// Rasterize shape into pixel mask
+	useEffect(() => {
+		let cancelled = false;
+		rasterizeShape(shape).then((mask) => {
+			if (cancelled) return;
+			maskRef.current = mask;
+			rebuildParticles();
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [shape, rebuildParticles]);
+
+	const handleResize = useCallback(
+		(w: number, h: number) => {
+			sizeRef.current = { w, h };
+			rebuildParticles();
+		},
+		[rebuildParticles],
+	);
 
 	useResize(containerRef, rendererRef, cameraRef, handleResize);
 
@@ -449,12 +382,19 @@ export function StarParticles() {
 		const introDone = introElapsed >= INTRO_DURATION + INTRO_STAGGER;
 		const m = mouse.current;
 		const {
-			targetR, targetG, targetB, startR, startG, startB,
-			alphaBoost, scatterAlpha,
+			targetR,
+			targetG,
+			targetB,
+			startR,
+			startG,
+			startB,
+			alphaBoost,
+			scatterAlpha,
 		} = colorsRef.current;
 		const scatterStart = EDGE_PARTICLES + FILL_PARTICLES;
+		const count = particles.length;
 
-		for (let i = 0; i < TOTAL_COUNT; i++) {
+		for (let i = 0; i < count; i++) {
 			const p = particles[i];
 
 			if (!introDone) {
