@@ -8,6 +8,8 @@
 		"title": "Blog",
 		"empty": "No posts yet.",
 		"readingTime": "{minutes} min read",
+		"compactOn": "Compact",
+		"compactOff": "Detailed",
 		"tags": {
 			"open-source": "Open Source",
 			"opinion": "Opinion"
