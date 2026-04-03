@@ -25,7 +25,7 @@ export default async function LocaleLayout({
 	return (
 		<NextIntlClientProvider>
 			<HtmlLang locale={locale} />
-			<div className="mx-auto w-full max-w-[600px] px-6 py-16">
+			<div className="mx-auto w-full max-w-[600px] px-6 py-8 sm:py-16">
 				{children}
 				<div className="mt-6">
 					<Footer />
