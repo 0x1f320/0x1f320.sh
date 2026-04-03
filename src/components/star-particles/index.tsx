@@ -60,12 +60,12 @@ void main() {
 
 const FRAGMENT_SHADER = `
 precision mediump float;
-uniform float u_pointSize;
+uniform float u_cssPointSize;
 varying float v_alpha;
 varying vec3 v_color;
 
 void main() {
-  if (u_pointSize > 1.5) {
+  if (u_cssPointSize > 1.5) {
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
     float edge = smoothstep(0.5, 0.15, dist);
@@ -264,6 +264,7 @@ export function StarParticles({ shape = "\u{1F320}" }: StarParticlesProps) {
 		const material = new THREE.ShaderMaterial({
 			uniforms: {
 				u_pointSize: { value: colorsRef.current.pointSize },
+				u_cssPointSize: { value: colorsRef.current.pointSize },
 			},
 			vertexShader: VERTEX_SHADER,
 			fragmentShader: FRAGMENT_SHADER,
@@ -375,7 +376,10 @@ export function StarParticles({ shape = "\u{1F320}" }: StarParticlesProps) {
 		if (!renderer || !scene || !camera || !bufs || particles.length === 0)
 			return;
 
-		bufs.material.uniforms.u_pointSize.value = colorsRef.current.pointSize;
+		const cssSize = colorsRef.current.pointSize;
+		bufs.material.uniforms.u_pointSize.value =
+			cssSize * renderer.getPixelRatio();
+		bufs.material.uniforms.u_cssPointSize.value = cssSize;
 
 		const { posArray, alphaArray, colorArray, posAttr, alphaAttr, colorAttr } =
 			bufs;

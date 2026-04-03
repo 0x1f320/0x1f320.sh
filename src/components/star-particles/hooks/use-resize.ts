@@ -19,6 +19,7 @@ export function useResize(
 		const newH = container.clientHeight;
 		if (newW === prevSize.current.w && newH === prevSize.current.h) return;
 
+		renderer.setPixelRatio(window.devicePixelRatio);
 		renderer.setSize(newW, newH);
 		camera.right = newW;
 		camera.bottom = newH;

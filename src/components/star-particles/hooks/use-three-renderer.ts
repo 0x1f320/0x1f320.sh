@@ -21,6 +21,7 @@ export function useThreeRenderer(
 			alpha: true,
 			premultipliedAlpha: true,
 		});
+		renderer.setPixelRatio(window.devicePixelRatio);
 		renderer.setSize(w, h);
 		renderer.setClearColor(0x000000, 0);
 		container.appendChild(renderer.domElement);
