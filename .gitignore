@@ -22,7 +22,6 @@
 
 # misc
 .DS_Store
-.claude/
 .context/
 *.pem
 
