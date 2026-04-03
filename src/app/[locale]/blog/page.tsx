@@ -1,13 +1,33 @@
+import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getAllBlogPosts } from "@/lib/blog";
 import { BlogList } from "./blog-list";
 
-export default async function BlogPage({
-	params,
-}: {
+type Props = {
 	params: Promise<{ locale: string }>;
-}) {
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const { locale } = await params;
+	const t = await getTranslations({ locale, namespace: "Blog" });
+	const meta = await getTranslations({ locale, namespace: "Metadata" });
+	const path = locale === "ko" ? "/blog" : "/en/blog";
+
+	return {
+		title: t("title"),
+		description: meta("blogDescription"),
+		alternates: {
+			canonical: path,
+			languages: {
+				ko: "/blog",
+				en: "/en/blog",
+			},
+		},
+	};
+}
+
+export default async function BlogPage({ params }: Props) {
 	const { locale } = await params;
 	setRequestLocale(locale);
 

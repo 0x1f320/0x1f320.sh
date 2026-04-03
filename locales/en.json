@@ -1,4 +1,8 @@
 {
+	"Metadata": {
+		"siteDescription": "A tech blog by a software engineer based in South Korea. Writing about problem-solving and customer experiences.",
+		"blogDescription": "Articles on software engineering, open source, and customer experiences"
+	},
 	"Home": {
 		"bio": "A software engineer based in South Korea with 5 years of experience.<br></br>I solve <underline>problems</underline> and contribute to <underline2>great customer experiences</underline2>.",
 		"blog": "Blog",
