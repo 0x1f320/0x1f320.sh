@@ -1,6 +1,7 @@
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { Footer } from "@/components/footer";
 import { routing } from "@/i18n/routing";
 import { HtmlLang } from "./html-lang";
 
@@ -24,7 +25,12 @@ export default async function LocaleLayout({
 	return (
 		<NextIntlClientProvider>
 			<HtmlLang locale={locale} />
-			{children}
+			<div className="mx-auto w-full max-w-[600px] px-6 pt-16">
+				{children}
+				<div className="mt-6">
+					<Footer />
+				</div>
+			</div>
 		</NextIntlClientProvider>
 	);
 }

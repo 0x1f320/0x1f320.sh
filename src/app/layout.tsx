@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono, Noto_Serif_KR } from "next/font/google";
-import localFont from "next/font/local";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,12 +20,6 @@ const notoSerifKR = Noto_Serif_KR({
 	display: "swap",
 });
 
-const suite = localFont({
-	src: "../fonts/SUITE-Variable.woff2",
-	variable: "--font-suite",
-	display: "swap",
-});
-
 export const metadata: Metadata = {
 	title: "0x1F320",
 };
@@ -39,7 +32,7 @@ export default function RootLayout({
 	return (
 		<html
 			lang="ko"
-			className={`${geistSans.variable} ${geistMono.variable} ${suite.variable} ${notoSerifKR.variable}`}
+			className={`${geistSans.variable} ${geistMono.variable} ${notoSerifKR.variable}`}
 			suppressHydrationWarning
 		>
 			<head>
