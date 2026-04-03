@@ -1,20 +1,104 @@
 ---
-title: "Hello, Blog"
+title: "Starting a Blog"
 date: "2026-04-03"
-description: "The very first blog post."
+description: "Why I made this blog, and how it's built."
 ---
 
-## Introduction
+## Why I Started
 
-This is the first blog post written in MDX.
+Writing something down in a note and writing it as a proper post are different things. Writing forces **clarity**, and clarity is useful later — whether for *myself* or for someone else.
 
-With MDX, you can use **React components** inside markdown.
+I'd been meaning to start a blog for a while, but kept putting it off with "I'll start when I have something good to write about." So this time I ~~waited for the perfect moment~~ just built it.
 
-## Code Example
+![Blog structure](/blog/placeholder.svg)
 
-```typescript
-const greeting = "Hello!";
-console.log(greeting);
+## Tech Stack
+
+This blog lives inside my personal site. Here's the stack:
+
+| Area | Tech | Notes |
+|------|------|-------|
+| Framework | Next.js 16 | App Router, Turbopack |
+| Content | MDX | Markdown + React |
+| i18n | next-intl | ko / en |
+| Comments | giscus | GitHub Discussions |
+| Deploy | Vercel | Static generation |
+
+### How Posts Are Written
+
+Posts are `.mdx` files in `content/blog/`. File naming convention:
+
+```
+content/blog/
+├── hello-world.ko.mdx
+└── hello-world.en.mdx
 ```
 
-> MDX combines the simplicity of markdown with the expressiveness of React.
+Each file has frontmatter for metadata:
+
+```yaml
+---
+title: "Post Title"
+date: "2026-04-03"
+description: "One-line description"
+---
+```
+
+### Code Highlighting
+
+A TypeScript example:
+
+```typescript
+interface BlogPost {
+  slug: string;
+  title: string;
+  date: string;
+  content: string;
+}
+
+async function getBlogPost(slug: string, locale: string): Promise<BlogPost | null> {
+  const filePath = path.join(CONTENT_DIR, `${slug}.${locale}.mdx`);
+  const raw = await fs.readFile(filePath, "utf-8");
+  const { data, content } = matter(raw);
+
+  return {
+    slug,
+    title: data.title ?? slug,
+    date: data.date ?? "",
+    content,
+  };
+}
+```
+
+There's also inline code. Run `pnpm dev` for the dev server, `pnpm build` to build.
+
+## What I Learned Building This
+
+1. **MDX is simpler than expected.** With `next-mdx-remote`, you can read from the filesystem and render directly in server components.
+2. **Static generation is fast.** Use `generateStaticParams` to build all posts at build time — near-instant loading after deploy.
+3. **Add i18n early.** Retrofitting it later means touching every string.
+
+And a few things not to do:
+
+- Don't wait for a perfect design
+- Don't try to write something profound for the first post
+- Don't waste time setting up a CMS — the filesystem is enough
+
+> If you wait for the perfect first post, you'll never start.
+
+## Going Forward
+
+I'll mostly write about things I learn, mistakes I make, and thoughts I have while building software. No fixed schedule — writing out of obligation burns out fast.
+
+Topics I'm interested in:
+
+- TypeScript patterns and anti-patterns
+- React / Next.js practical tips
+- Dev environment & tooling
+- Thoughts on software design
+
+---
+
+Thanks for reading. You can leave comments with a GitHub account.
+
+[View source on GitHub](https://github.com/0x1f320/0x1f320.sh)
