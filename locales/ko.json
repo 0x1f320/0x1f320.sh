@@ -9,6 +9,8 @@
 		"empty": "아직 작성된 글이 없습니다.",
 		"readingTime": "읽는데 {minutes}분",
 		"tags": {
+			"open-source": "오픈소스",
+			"opinion": "생각"
 		}
 	},
 	"Theme": {
