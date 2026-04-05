@@ -16,7 +16,8 @@
 		"compactOff": "Detailed",
 		"tags": {
 			"open-source": "Open Source",
-			"opinion": "Opinion"
+			"opinion": "Opinion",
+			"llm": "LLM"
 		}
 	},
 	"Theme": {
